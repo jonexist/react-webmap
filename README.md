@@ -14,4 +14,4 @@ This project is a web application built with React and Vite that uses Mapbox GL 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/yourrepository.git
+   git clone https://github.com/jonexist/react-webmap.git
