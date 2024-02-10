@@ -30,6 +30,3 @@ dist-ssr
 
 # Environment variables
 .env
-
-# Vite timestamp files
-vite.config.js.timestamp*.mjs
