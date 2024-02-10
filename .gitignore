@@ -7,9 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build output
 dist
 dist-ssr
+
+# Local development
 *.local
 
 # Editor directories and files
@@ -23,8 +28,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# env
+# Environment variables
 .env
 
-# Time stamp
-.mjs
+# Vite timestamp files
+vite.config.js.timestamp*.mjs
