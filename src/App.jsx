@@ -40,6 +40,11 @@ const App = () => {
         })
       );
   
+      // Add a default marker at the location of North Carolina
+      new mapboxgl.Marker()
+        .setLngLat([-79.3267, 35.5110]) // Longitude and latitude of North Carolina
+        .addTo(map.current);
+
       // Add geolocation control
       const geolocate = new mapboxgl.GeolocateControl({
         positionOptions: {
