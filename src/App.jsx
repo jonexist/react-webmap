@@ -15,7 +15,7 @@ const App = () => {
   // Initialize state for longitude, latitude, and zoom level
   const [lng, setLng] = useState(-70.9);
   const [lat, setLat] = useState(42.35);
-  const [zoom, setZoom] = useState(1.5);
+  const [zoom, setZoom] = useState(3.5);
   
   useEffect(() => {
     // If the map is already initialized, don't do anything
