@@ -33,7 +33,7 @@
 
 .mapboxgl-ctrl-geocoder,
 .mapboxgl-ctrl-geocoder .suggestions {
-  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, .1);
 }
 
 .mapboxgl-ctrl-geocoder {
@@ -74,7 +74,6 @@
   padding: 6px 45px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 100%;
 }
 
 .mapboxgl-ctrl-geocoder .suggestions {
@@ -92,7 +91,7 @@
   z-index: 1000;
 }
 
-.mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--pin-right > * {
+.mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--pin-right>* {
   display: none;
   position: absolute;
   right: 8px;
@@ -109,15 +108,15 @@
   padding: 0;
 }
 
-.mapboxgl-ctrl-geocoder .suggestions > .active > a,
-.mapboxgl-ctrl-geocoder .suggestions > li > a:hover {
+.mapboxgl-ctrl-geocoder .suggestions>.active>a,
+.mapboxgl-ctrl-geocoder .suggestions>li>a:hover {
   background-color: #f3f3f3;
   color: #404040;
   cursor: pointer;
   text-decoration: none;
 }
 
-.mapboxgl-ctrl-geocoder .suggestions > li > a {
+.mapboxgl-ctrl-geocoder .suggestions>li>a {
   color: #404040;
   cursor: default;
   display: block;
