@@ -1,88 +1,152 @@
-// Import necessary dependencies
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
-import './index.css'
+import './index.css';
+import icon from './assets/location-pin.png';
 
-// Set Mapbox access token
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const App = () => {
-  // Create references for the map container and the map itself
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-
-  // Initialize state for longitude, latitude, and zoom level
-  const [lng, setLng] = useState(-70.9);
-  const [lat, setLat] = useState(42.35);
-  const [zoom, setZoom] = useState(3.5);
-  
-  useEffect(() => {
-    // If the map is already initialized, don't do anything
-    if (map.current) return;
-
-    // Initialize the map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [lng, lat],
-      zoom: zoom
-    });
-  
-    // Once the map is loaded, add controls
-    map.current.on('load', () => {
-      // Add geocoder control
-      map.current.addControl(
-        new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
-          marker: true,
-        })
-      );
-  
-      // Add a default marker at the location of North Carolina
-      new mapboxgl.Marker()
-        .setLngLat([-79.3267, 35.5110]) // Longitude and latitude of North Carolina
-        .addTo(map.current);
-
-      // Add geolocation control
-      const geolocate = new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-        },
-        trackUserLocation: true
-      });
-  
-      map.current.addControl(geolocate);
-  
-      // When the geolocate control locates the user, add a marker at the user's location
-      geolocate.on('geolocate', event => {
-        const lon = event.coords.longitude;
-        const lat = event.coords.latitude;
-        const position = [lon, lat];
-        new mapboxgl.Marker().setLngLat(position).addTo(map.current);
-      });
-  
-      // Trigger the geolocate control to start tracking the user's location
-      geolocate.trigger();
-    });
-  
-    // When the map is moved, update the longitude, latitude, and zoom level in the state
-    map.current.on('move', () => {
-      setLng(map.current.getCenter().lng.toFixed(4));
-      setLat(map.current.getCenter().lat.toFixed(4));
-      setZoom(map.current.getZoom().toFixed(2));
-    });
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const geocoderRef = useRef(null);
+  const geolocateRef = useRef(null);
+  const [mapState, setMapState] = useState({
+    lng: -80.5801,
+    lat: 35.4091,
+    zoom: 13,
   });
 
-  // Render the map container and a sidebar with the current longitude, latitude, and zoom level
+  const uncCoordinates = [mapState.lng, mapState.lat];
+
+  useEffect(() => {
+    if (mapRef.current) return;
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [mapState.lng, mapState.lat],
+      zoom: mapState.zoom,
+    });
+
+    const currentMarker = new mapboxgl.Marker({ color: 'red' })
+      .setLngLat(uncCoordinates)
+      .addTo(map);
+
+    const currentPopup = new mapboxgl.Popup({ offset: 20 }).setText(
+      'Concord, North Carolina, United States'
+    );
+
+    currentMarker.getElement().addEventListener('mouseenter', () => {
+      currentPopup.setLngLat(currentMarker.getLngLat()).addTo(map);
+    });
+
+    currentMarker.getElement().addEventListener('mouseleave', () => {
+      currentPopup.remove();
+    });
+
+    map.on('move', () => {
+      setMapState({
+        lng: map.getCenter().lng.toFixed(4),
+        lat: map.getCenter().lat.toFixed(4),
+        zoom: map.getZoom().toFixed(2),
+      });
+    });
+
+    mapRef.current = map;
+  }, [mapState]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!mapRef.current) return;
+
+      const map = mapRef.current;
+      const [lng, lat] = uncCoordinates;
+      const radius = 20000;
+      const placeType = 'pharmacy';
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${placeType}.json?proximity=${lng},${lat}&radius=${radius}&access_token=${mapboxgl.accessToken}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        data.features.forEach((pharmacyLoc) => {
+          const { coordinates } = pharmacyLoc.geometry;
+
+          const el = document.createElement('div');
+          el.className = 'custom-marker';
+          el.style.backgroundImage = `url(${icon})`;
+
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat(coordinates)
+            .addTo(map);
+
+          const popup = new mapboxgl.Popup({ offset: 25 })
+            .setText(pharmacyLoc.place_name)
+            .addTo(map);
+
+          marker.getElement().addEventListener('mouseenter', () => {
+            popup.setLngLat(marker.getLngLat()).addTo(map);
+          });
+
+          marker.getElement().addEventListener('mouseleave', () => {
+            popup.remove();
+          });
+        });
+      } catch (error) {
+        console.error('Error fetching data: ', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+
+    const addGeocoderControl = () => {
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: true,
+      });
+
+      map.addControl(geocoder);
+      geocoderRef.current = geocoder;
+    };
+
+    const addGeolocateControl = () => {
+      const geolocate = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: true,
+      });
+
+      map.addControl(geolocate);
+      geolocateRef.current = geolocate;
+    };
+
+    map.on('load', () => {
+      if (!geocoderRef.current && !geolocateRef.current) {
+        addGeocoderControl();
+        addGeolocateControl();
+      }
+    });
+  }, []);
+
   return (
     <div>
-      <div className="sidebar">Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}</div>
-      <div ref={mapContainer} className="map-container" />
+      <div className='sidebar'>
+        Longitude: {mapState.lng} | Latitude: {mapState.lat} | Zoom:{' '}
+        {mapState.zoom}
+      </div>
+      <div ref={mapContainerRef} className='map-container' />
     </div>
-  )
-}
+  );
+};
 
-// Export the App component
 export default App;
