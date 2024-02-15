@@ -26,3 +26,9 @@
   top: 0;
   z-index: 1;
 }
+
+.custom-marker {
+  background-size: cover;
+  width: 35px;
+  height: 35px;
+}
