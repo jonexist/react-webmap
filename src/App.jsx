@@ -1,9 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useRef, useEffect, useState } from 'react';
+import './index.css';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
-import './index.css';
-import icon from './assets/location-pin.png';
+import geocodingApi from './lib/geocodingApi';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -12,13 +11,17 @@ const App = () => {
   const mapRef = useRef(null);
   const geocoderRef = useRef(null);
   const geolocateRef = useRef(null);
+  const markersRef = useRef([]);
   const [mapState, setMapState] = useState({
     lng: -80.5801,
     lat: 35.4091,
-    zoom: 13,
+    zoom: 12,
   });
 
-  const uncCoordinates = [mapState.lng, mapState.lat];
+  const unCoordinates = useMemo(
+    () => [mapState.lng, mapState.lat],
+    [mapState.lat, mapState.lng]
+  );
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -31,7 +34,7 @@ const App = () => {
     });
 
     const currentMarker = new mapboxgl.Marker({ color: 'red' })
-      .setLngLat(uncCoordinates)
+      .setLngLat(unCoordinates)
       .addTo(map);
 
     const currentPopup = new mapboxgl.Popup({ offset: 20 }).setText(
@@ -55,52 +58,25 @@ const App = () => {
     });
 
     mapRef.current = map;
-  }, [mapState]);
+  }, [mapState, unCoordinates]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!mapRef.current) return;
+    const abortController = new AbortController();
 
-      const map = mapRef.current;
-      const [lng, lat] = uncCoordinates;
-      const radius = 20000;
-      const placeType = 'pharmacy';
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${placeType}.json?proximity=${lng},${lat}&radius=${radius}&access_token=${mapboxgl.accessToken}`;
+    if (mapRef.current) {
+      geocodingApi(
+        mapRef.current,
+        unCoordinates,
+        mapboxgl.accessToken,
+        markersRef,
+        abortController
+      );
+    }
 
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        data.features.forEach((pharmacyLoc) => {
-          const { coordinates } = pharmacyLoc.geometry;
-
-          const el = document.createElement('div');
-          el.className = 'custom-marker';
-          el.style.backgroundImage = `url(${icon})`;
-
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat(coordinates)
-            .addTo(map);
-
-          const popup = new mapboxgl.Popup({ offset: 25 })
-            .setText(pharmacyLoc.place_name)
-            .addTo(map);
-
-          marker.getElement().addEventListener('mouseenter', () => {
-            popup.setLngLat(marker.getLngLat()).addTo(map);
-          });
-
-          marker.getElement().addEventListener('mouseleave', () => {
-            popup.remove();
-          });
-        });
-      } catch (error) {
-        console.error('Error fetching data: ', error);
-      }
+    return () => {
+      abortController.abort();
     };
-
-    fetchData();
-  }, []);
+  }, [unCoordinates]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -124,6 +100,27 @@ const App = () => {
           enableHighAccuracy: true,
         },
         trackUserLocation: true,
+      });
+
+      // Create a marker with no location, to be added on 'geolocate' event
+      const marker = new mapboxgl.Marker();
+
+      geolocate.on('geolocate', (e) => {
+        // Set the marker location to the user's location
+        const { longitude, latitude } = e.coords;
+        marker.setLngLat([longitude, latitude]).addTo(map);
+      });
+
+      const popup = new mapboxgl.Popup({ offset: 25 }).setText(
+        'Your current location'
+      );
+
+      marker.getElement().addEventListener('mouseenter', () => {
+        popup.setLngLat(marker.getLngLat()).addTo(map);
+      });
+
+      marker.getElement().addEventListener('mouseleave', () => {
+        popup.remove();
       });
 
       map.addControl(geolocate);
