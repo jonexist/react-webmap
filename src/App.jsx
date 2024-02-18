@@ -2,7 +2,8 @@ import './index.css';
 import { useRef, useEffect, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
-import geocodingApi from './lib/geocodingApi';
+import { addPopupToMarker } from './utils/addPopupToMarker';
+import fetchGeocodingApi from './lib/fetchGeocodingApi';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -37,17 +38,11 @@ const App = () => {
       .setLngLat(unCoordinates)
       .addTo(map);
 
-    const currentPopup = new mapboxgl.Popup({ offset: 20 }).setText(
-      'Concord, North Carolina, United States'
+    addPopupToMarker(
+      currentMarker,
+      { place_name: 'Concord, North Carolina, United States' },
+      map
     );
-
-    currentMarker.getElement().addEventListener('mouseenter', () => {
-      currentPopup.setLngLat(currentMarker.getLngLat()).addTo(map);
-    });
-
-    currentMarker.getElement().addEventListener('mouseleave', () => {
-      currentPopup.remove();
-    });
 
     map.on('move', () => {
       setMapState({
@@ -64,7 +59,7 @@ const App = () => {
     const abortController = new AbortController();
 
     if (mapRef.current) {
-      geocodingApi(
+      fetchGeocodingApi(
         mapRef.current,
         unCoordinates,
         mapboxgl.accessToken,
@@ -102,26 +97,14 @@ const App = () => {
         trackUserLocation: true,
       });
 
-      // Create a marker with no location, to be added on 'geolocate' event
       const marker = new mapboxgl.Marker();
 
       geolocate.on('geolocate', (e) => {
-        // Set the marker location to the user's location
         const { longitude, latitude } = e.coords;
         marker.setLngLat([longitude, latitude]).addTo(map);
       });
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setText(
-        'Your current location'
-      );
-
-      marker.getElement().addEventListener('mouseenter', () => {
-        popup.setLngLat(marker.getLngLat()).addTo(map);
-      });
-
-      marker.getElement().addEventListener('mouseleave', () => {
-        popup.remove();
-      });
+      addPopupToMarker(marker, { place_name: 'Your current location' }, map);
 
       map.addControl(geolocate);
       geolocateRef.current = geolocate;
