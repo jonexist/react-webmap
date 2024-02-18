@@ -1,7 +1,7 @@
 import mapboxgl from 'mapbox-gl';
 import icon from '../assets/location-pin.png';
 
-const fetchMapBoxApi = async (
+const fetchGeocodingApi = async (
   mapRef,
   unCoordinates,
   token,
@@ -55,4 +55,4 @@ const fetchMapBoxApi = async (
   }
 };
 
-export default fetchMapBoxApi;
+export default fetchGeocodingApi;
