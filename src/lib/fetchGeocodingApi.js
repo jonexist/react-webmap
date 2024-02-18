@@ -1,20 +1,36 @@
 import mapboxgl from 'mapbox-gl';
 import icon from '../assets/location-pin.png';
+import { createCustomMarker } from '../utils/createCustomMarker';
+import { addPopupToMarker } from '../utils/addPopupToMarker';
+
+const constructApiUrl = (lng, lat, radius, placeType, token) =>
+  `https://api.mapbox.com/geocoding/v5/mapbox.places/${placeType}.json?proximity=${lng},${lat}&radius=${radius}&access_token=${token}`;
+
+const processLocation = (pharmacyLoc, map, markersRef) => {
+  const { coordinates } = pharmacyLoc.geometry;
+
+  const el = createCustomMarker(icon);
+
+  const marker = new mapboxgl.Marker(el).setLngLat(coordinates).addTo(map);
+
+  markersRef.current.push(marker);
+
+  addPopupToMarker(marker, pharmacyLoc, map);
+};
 
 const fetchGeocodingApi = async (
   mapRef,
-  unCoordinates,
+  locationCoordinates,
   token,
   markersRef,
   abortController
 ) => {
-  const map = mapRef;
-  const [lng, lat] = unCoordinates;
+  const [lng, lat] = locationCoordinates;
   const radius = 20000;
   const placeType = 'pharmacy';
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${placeType}.json?proximity=${lng},${lat}&radius=${radius}&access_token=${token}`;
 
-  // Remove the previous markers
+  const url = constructApiUrl(lng, lat, radius, placeType, token);
+
   markersRef.current.forEach((marker) => marker.remove());
   markersRef.current = [];
 
@@ -22,30 +38,9 @@ const fetchGeocodingApi = async (
     const response = await fetch(url, { signal: abortController.signal });
     const data = await response.json();
 
-    data.features.forEach((pharmacyLoc) => {
-      const { coordinates } = pharmacyLoc.geometry;
-
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.style.backgroundImage = `url(${icon})`;
-
-      const marker = new mapboxgl.Marker(el).setLngLat(coordinates).addTo(map);
-
-      // Add the marker to the markersRef
-      markersRef.current.push(marker);
-
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setText(pharmacyLoc.place_name)
-        .addTo(map);
-
-      marker.getElement().addEventListener('mouseenter', () => {
-        popup.setLngLat(marker.getLngLat()).addTo(map);
-      });
-
-      marker.getElement().addEventListener('mouseleave', () => {
-        popup.remove();
-      });
-    });
+    data.features.forEach((pharmacyLoc) =>
+      processLocation(pharmacyLoc, mapRef, markersRef)
+    );
   } catch (error) {
     if (error.name === 'AbortError') {
       console.log('Fetch aborted');
