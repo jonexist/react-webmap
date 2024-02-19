@@ -119,13 +119,13 @@ const App = () => {
   }, []);
 
   return (
-    <div>
+    <>
       <div className='sidebar'>
         Longitude: {mapState.lng} | Latitude: {mapState.lat} | Zoom:{' '}
         {mapState.zoom}
       </div>
       <div ref={mapContainerRef} className='map-container' />
-    </div>
+    </>
   );
 };
 
