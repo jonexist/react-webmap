@@ -19,7 +19,7 @@ const App = () => {
     zoom: 12,
   });
 
-  const unCoordinates = useMemo(
+  const locationProximity = useMemo(
     () => [mapState.lng, mapState.lat],
     [mapState.lat, mapState.lng]
   );
@@ -35,7 +35,7 @@ const App = () => {
     });
 
     const currentMarker = new mapboxgl.Marker({ color: 'red' })
-      .setLngLat(unCoordinates)
+      .setLngLat(locationProximity)
       .addTo(map);
 
     addPopupToMarker(
@@ -53,7 +53,7 @@ const App = () => {
     });
 
     mapRef.current = map;
-  }, [mapState, unCoordinates]);
+  }, [mapState, locationProximity]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -61,7 +61,7 @@ const App = () => {
     if (mapRef.current) {
       fetchGeocodingApi(
         mapRef.current,
-        unCoordinates,
+        locationProximity,
         mapboxgl.accessToken,
         markersRef,
         abortController
@@ -71,7 +71,7 @@ const App = () => {
     return () => {
       abortController.abort();
     };
-  }, [unCoordinates]);
+  }, [locationProximity]);
 
   useEffect(() => {
     if (!mapRef.current) return;
