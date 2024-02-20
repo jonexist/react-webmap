@@ -17,7 +17,7 @@ const App = () => {
   const [mapState, setMapState] = useState({
     lng: -80.5801,
     lat: 35.4091,
-    zoom: 12,
+    zoom: 11,
   });
 
   // Memoize the locationProximity value to prevent unnecessary re-renders
