@@ -86,11 +86,11 @@ const App = () => {
 
   return (
     <>
-      <div className='sidebar'>
+      <aside className='sidebar'>
         Longitude: {mapState.lng} | Latitude: {mapState.lat} | Zoom:{' '}
         {mapState.zoom}
-      </div>
-      <div ref={mapContainerRef} className='map-container' />
+      </aside>
+      <main ref={mapContainerRef} className='map-container' />
     </>
   );
 };
