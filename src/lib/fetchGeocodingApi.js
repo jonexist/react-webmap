@@ -2,15 +2,23 @@ import mapboxgl from 'mapbox-gl';
 import icon from '../assets/location-pin.png';
 import { createCustomMarker } from '../utils/createCustomMarker';
 import { addPopupToMarker } from '../utils/addPopupToMarker';
+import { distance } from '@turf/turf';
 
 // Function to construct the URL for the MapBox Geocoding API request
 const constructApiUrl = (lng, lat, placeType, token) =>
   `https://api.mapbox.com/geocoding/v5/mapbox.places/${placeType}.json?proximity=${lng},${lat}&access_token=${token}`;
 
 // Function to process each location from the API response
-const processLocation = (pharmacyLoc, map, markersRef) => {
+const processLocation = (pharmacyLoc, map, markersRef, locationProximity) => {
   // Extract the coordinates from the location's geometry
   const { coordinates } = pharmacyLoc.geometry;
+
+  const from = locationProximity;
+  const to = coordinates;
+  const options = { units: 'kilometers' };
+  const distanceBetween = distance(from, to, options);
+  console.log(distanceBetween);
+
   // Create a custom marker using the provided icon
   const el = createCustomMarker(icon);
   // Create a new marker at the location's coordinates and add it to the map
@@ -18,7 +26,7 @@ const processLocation = (pharmacyLoc, map, markersRef) => {
   // Add the new marker to the markers reference array
   markersRef.current.push(marker);
   // Add a popup to the marker with the location's information
-  addPopupToMarker(marker, pharmacyLoc, map);
+  addPopupToMarker(marker, pharmacyLoc, map, distanceBetween);
 };
 
 // Function to fetch data from MapBox GL JS Geocoding API
@@ -45,7 +53,7 @@ const fetchGeocodingApi = async (
     // Process each location from the API response
     // This involves adding a marker to the map for each location
     data.features.forEach((pharmacyLoc) =>
-      processLocation(pharmacyLoc, mapRef, markersRef)
+      processLocation(pharmacyLoc, mapRef, markersRef, locationCoordinates)
     );
   } catch (error) {
     if (error.name === 'AbortError') {
